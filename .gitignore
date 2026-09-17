@@ -2,3 +2,4 @@
 __pycache__/
 demo.db
 ai/live_cases.json
+ai/*.raw.txt

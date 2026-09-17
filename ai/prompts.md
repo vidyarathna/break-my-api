@@ -10,7 +10,8 @@ trick: prose is a blog post, JSON is a test suite.
 ```
 Return ONLY a JSON object, no prose, no markdown fences, in this exact shape:
 
-{"cases": [
+{"assumptions": ["only if the prompt asks for them - one sentence each"],
+ "cases": [
   {
     "id": "TC-001",
     "objective": "one line - what this case is trying to break",
@@ -25,9 +26,17 @@ Return ONLY a JSON object, no prose, no markdown fences, in this exact shape:
     "potential_vulnerability": "the class of defect you suspect",
     "reason": "why you think this endpoint is weak here",
     "severity": "low|medium|high|critical",
-    "repeat": 1
+    "repeat": 1,
+    "setup": [
+      {"method": "POST", "endpoint": "/path", "auth": "alice", "payload": {}}
+    ]
   }
 ]}
+
+Starting state for EVERY case: the database is freshly reset, and alice has
+already bought one GENERAL-2026 ticket, so order 1 exists and belongs to alice.
+Use "setup" only if a case needs more state than that; setup requests run in
+order before the case and their responses are not checked.
 
 Rules:
 - expect_status is the status a CORRECT implementation would return, not the
@@ -76,8 +85,10 @@ API under test:
 <paste the endpoint summary from demo/curl.md>
 <paste the sample login response, including the raw token string>
 
-Before generating cases, list the five assumptions this API is most likely to
-be making about its callers. Then write test cases that violate each one.
+Before generating cases, fill the "assumptions" array with the five assumptions
+this API is most likely to be making about its callers. Then write test cases
+that violate each one, and start each case's "reason" with the number of the
+assumption it violates, e.g. "A3: ...".
 
 Cover at minimum:
 - authentication: missing, malformed, expired, forged, another user's
