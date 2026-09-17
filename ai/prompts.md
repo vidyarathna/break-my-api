@@ -111,6 +111,9 @@ Rank by exploitability, not by how easy the case was to write.
 Forget input validation. Assume every field is well-formed and every request is
 authenticated. I want you to attack the ECONOMICS of this API.
 
+API under test:
+<paste the endpoint summary from demo/curl.md>
+
 Here are the rules of the system:
 - Users hold a prepaid credit balance.
 - Buying a ticket deducts the price from that balance.

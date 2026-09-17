@@ -1,0 +1,44 @@
+{
+  "generated_by": "qwen2.5-coder:7b via ai/generate.py --prompt 3",
+  "generated_at": "2026-09-17T21:43:42",
+  "seed": 42,
+  "raw_response": "run_prompt3.raw.txt",
+  "assumptions": [
+    "The system does not enforce any limits on the number of requests a user can make or the amount of loyalty credits they can earn."
+  ],
+  "rejected": [],
+  "cases": [
+    {
+      "id": "TC-001",
+      "objective": "Manipulate the balance by buying a ticket with a coupon and then reversing the transaction.",
+      "method": "POST",
+      "endpoint": "/buy_ticket",
+      "auth": "alice",
+      "payload": {
+        "ticket_type": "GENERAL-2026",
+        "coupon": "SPEAKER100"
+      },
+      "query": {},
+      "expected_behaviour": "The balance should be reduced by the ticket price minus the coupon discount.",
+      "expect_status": [
+        200
+      ],
+      "expect_body_not_contains": "",
+      "potential_vulnerability": "Reversal of transaction",
+      "reason": "The system does not enforce any limits on the number of requests a user can make, allowing for potential reversal of transactions.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": [
+        {
+          "method": "POST",
+          "endpoint": "/buy_ticket",
+          "auth": "alice",
+          "payload": {
+            "ticket_type": "GENERAL-2026",
+            "coupon": "SPEAKER100"
+          }
+        }
+      ]
+    }
+  ]
+}
