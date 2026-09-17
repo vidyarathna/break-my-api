@@ -20,9 +20,11 @@ In a second terminal:
 
 ```bash
 python -m tests.runner        # execute the AI-generated cases
+python -m tests.runner TC-008 # one case; same verdict as in the full run
+python ai/generate.py --prompt 2 && python -m tests.runner --cases ai/live_cases.json
 pytest tests/ -q              # the same cases, CI-shaped
 python demo/race.py           # what a list of test cases cannot express
-python demo/money_loop.py     # what the model found half of
+python demo/money_loop.py     # the chained bug: coupon replay + list-price credits
 curl -X POST localhost:8000/_reset   # clean slate between runs
 ```
 
@@ -46,18 +48,21 @@ single-use 100% coupon.
 Every bug is marked `# BUG-Bn` in `app/main.py`. Do not put this file on screen
 before the demo.
 
-| ID | Class | Found by the model? |
+| ID | Class | Exposed by `ai/generated_cases.json`? |
 |---|---|---|
-| B1 | negative / zero quantity, unchecked balance | yes, first try |
-| B2 | off-by-one on the documented 10-per-order limit | yes, from the description text |
-| B3 | SQL injection in ticket search, plus buying unpublished tickets by id | yes, on the second payload |
-| B4 | IDOR on `GET /orders/{id}` | yes |
-| B5 | single-use coupon can be replayed | yes |
-| B6 | oversell race on stock | **no** |
-| B7 | unsigned, forgeable bearer token | yes, once shown a sample token |
+| B1 | negative / zero quantity, unchecked balance | yes (TC-001, TC-002, TC-005) |
+| B2 | off-by-one on the documented 10-per-order limit | yes (TC-003) |
+| B3 | SQL injection in ticket search, plus buying unpublished tickets by id | yes (TC-006 stays green, TC-007 and TC-015 go red) |
+| B4 | IDOR on `GET /orders/{id}` | yes (TC-008) |
+| B5 | single-use coupon can be replayed | yes (TC-012) |
+| B6 | oversell race on stock | **no** — one request per case cannot express it |
+| B7 | unsigned, forgeable bearer token | yes (TC-011) |
 | B8 | loyalty credits computed from list price, not amount paid | **no** |
-| B9 | malformed token returns 500 with internal detail | yes |
-| B10 | student tickets sold to anyone | **no, and it cannot** |
+| B9 | malformed token returns 500 with internal detail | yes (TC-010) |
+| B10 | student tickets sold to anyone | **no** — and no reader can confirm it without the pricing policy |
+
+This table describes the saved case set, not models in general. Update it from
+a real `ai/generate.py` run before quoting it.
 
 B8 chained to B5 is the money loop. B10 is a rule that exists only in the
 organisation's pricing policy and appears nowhere in this repository.

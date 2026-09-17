@@ -40,9 +40,10 @@ two.
 
 ## The narrative
 
-> I built an API. I asked a model to break it. It broke it in ten places in
-> under a second. Then I showed you the three places it did not look, and why
-> two of those three were the ones that would have cost real money.
+> I built an API. I asked a model to break it. Ten of its guesses came back
+> red in a couple of seconds. Then I showed you three bugs that weren't in its
+> case set, and why two of those three were the ones that would have cost real
+> money.
 
 Structure it as a reversal:
 
@@ -50,12 +51,13 @@ Structure it as a reversal:
 2. **The turn** — here is the prompt. Not "write tests for this", but
    "assume the developer was competent but rushed, and the non-obvious
    validation is missing". (2 min)
-3. **The run** — 16 cases, 0.6 seconds, 10 red. Walk three of them. (5 min)
-4. **The escalation** — the model found half of a money bug. You found the other
-   half. Chain them, run the loop, show a balance climbing while nothing is
+3. **The run** — 16 cases, about a second and a half, 10 red. Walk three of them. (5 min)
+4. **The escalation** — the model flagged part of a money bug. You connected
+   the rest (say exactly how much it found in your real Prompt 3 run). Chain them, run the loop, show a balance climbing while nothing is
    paid. (4 min) ← **wow moment, ~minute 17**
-5. **The reversal** — three bugs the model never hypothesised, one of which it
-   structurally cannot. (4 min)
+5. **The reversal** — three bugs that weren't in the model's case set: one the
+   test format can't run, and one that depends on a rule it was never shown.
+   (4 min)
 6. **The point** — hypotheses, evidence, judgement. Where this goes in CI. (4 min)
 
 ## Opening 60 seconds
@@ -66,12 +68,12 @@ ChatGPT". Open cold, with a working request:
 > *(terminal already on screen, API already running)*
 >
 > "This is an internal ticket API. Four endpoints. I wrote it, I tested it, the
-> tests pass." *(run the happy-path curl; a 201 comes back)* "Two thousand
-> rupees charged, two hundred credits back. Correct."
+> tests pass." *(run the happy-path curl; a 201 comes back)* "Two tickets,
+> four thousand rupees charged, four hundred credits back. Correct."
 >
 > "I'm going to spend the next twenty-five minutes having a language model take
-> this apart, and then I'm going to show you the three bugs it never looked for
-> — because that second part is the one that decides whether this technique is
+> this apart, and then I'm going to show you three bugs that weren't in its
+> case set — because that second part is the one that decides whether this technique is
 > useful to you on Monday."
 
 Thirty-five seconds, no slide needed beyond the title, and you have already
@@ -106,8 +108,8 @@ it is the line people quote afterwards.
 
 The API is 180 lines. That is deliberate — the audience must be able to believe
 they could hold the whole thing in their head, because the punchline is that
-*even at 180 lines* it has ten bugs and the model found seven of them and missed
-the expensive one. Any bigger and the audience stops reasoning along with you.
+*even at 180 lines* it has ten bugs, the saved case set exposes seven of them,
+and it does not contain the expensive one. Any bigger and the audience stops reasoning along with you.
 
 Three techniques that carry the room:
 
@@ -326,7 +328,8 @@ schema — TC-008.
 
 **Live.** Two curls from `demo/curl.md`, or just point at the red TC-008 row.
 
-**Difficulty for an LLM.** Medium. It reliably *suggests* IDOR; it needs your
+**Difficulty for an LLM.** Medium. Models commonly *suggest* IDOR when object
+ids appear in the path; it needs your
 test harness to have two credentialed users before it can *prove* it. Good
 place to make the point that the model's output is only as good as the execution
 environment you give it.
@@ -360,12 +363,12 @@ meaningful test. Both of those are in the prompt, not in the model.
 
 ---
 
-### B6 — oversell race on stock ★ AI misses this
+### B6 — oversell race on stock ★ not in the case set
 
 **The bug.** `create_order` reads stock, decides, sleeps, writes
 `stock - quantity`. Twenty concurrent buyers all read 5 and all write 4.
-`demo/race.py`: 5 seats, 20 buyers, **20 accepted, 0 rejected, 2 seats
-"remaining"**.
+`demo/race.py`: 5 seats, 20 buyers, **20 accepted, 0 rejected, 2 or 3 seats
+"remaining"** (the exact number varies run to run; the oversell does not).
 
 **Why happy-path testing misses it.** Every request in the race is valid.
 Every response is a `201` the test suite already declared correct. The defect is
@@ -383,11 +386,12 @@ zero affected rows as sold out. One line, and it is the right one line.
 
 **Live.** `python demo/race.py`. Four lines of output, a huge point.
 
-**Difficulty for an LLM.** It will *mention* race conditions if you ask about
-concurrency. It will not produce a test case that demonstrates one, because the
+**Difficulty for an LLM.** It may well *mention* race conditions — many models
+suggest concurrent purchases unprompted, so do not claim it can't think of it.
+What it cannot do here is hand you an executable test for one, because the
 output format you gave it — one request, one expected status — cannot express
-"two requests at the same instant." This is a representational limit, not an
-intelligence limit, and saying it that way is what makes you sound like an
+"two requests at the same instant." This is a limit of the harness, not of the
+model's intelligence, and saying it that way is what makes you sound like an
 engineer rather than a sceptic.
 
 ---
@@ -421,7 +425,7 @@ three Q&A questions in advance.
 
 ---
 
-### B8 — loyalty credits are computed from list price ★ AI misses this — **the wow moment**
+### B8 — loyalty credits are computed from list price ★ the chain isn't in the case set — **the wow moment**
 
 **The bug.** `credits_earned = ticket.price * quantity * 0.10` — list price, not
 the amount actually paid. On its own: harmless-looking. Chained with B5: apply
@@ -494,7 +498,7 @@ and saying so keeps you honest.
 
 ---
 
-### B10 — student tickets sold to anyone ★ AI cannot find this
+### B10 — student tickets sold to anyone ★ AI cannot confirm this
 
 **The bug.** `STUDENT-2026` costs 500 against a general price of 2000. The
 `audience` column exists. Nothing checks it. Any user can buy the student
@@ -516,10 +520,13 @@ ticket as Alice with a corporate email address, get a `201`. Then say what the
 policy is. The gap between the screen and the policy is the entire argument of
 your talk.
 
-**Difficulty for an LLM.** Impossible, by construction, and you should use that
-word carefully and then defend it: there is no prompt that recovers a rule that
-exists nowhere in the artefact. If you paste the pricing policy into context it
-finds it instantly — which is the actionable takeaway, not a dunk on the model.
+**Difficulty for an LLM.** It can *guess*: `audience: "student"` is in every
+catalogue response, and a model may well try buying the student ticket as
+Alice. What it cannot do is tell you whether that `201` is a defect, because the
+rule exists nowhere in the artefact — and neither can a human who only has the
+repository. If you paste the pricing policy into context, it has a real chance
+of flagging it; try that before you say so on stage. That is the actionable
+takeaway, not a dunk on the model.
 
 ---
 
@@ -551,11 +558,12 @@ passes, which is the failure mode of every "AI writes your tests" demo.
 Two prompt techniques worth naming on stage, briefly:
 
 - **Make it enumerate assumptions before it generates.** "List the five
-  assumptions this API makes about its callers" measurably improves what comes
-  out, because the cases are then derived from something rather than recalled.
+  assumptions this API makes about its callers" is meant to make the cases
+  derived from something rather than recalled. Only say it improves the output
+  if you have compared runs with and without it.
 - **Feed it the artefact, not a description of the artefact.** Paste the token.
-  Paste the description strings. B7 and B2 are only findable from context you
-  chose to include.
+  Paste the description strings. B7 is much harder to find without a sample
+  token in context, and B2 depends on the "10 per order" text being there.
 
 ---
 
@@ -599,7 +607,7 @@ Real output, reproducible:
 The honest scorecard. Put these exact numbers on a slide — real numbers from
 your own run are worth more than any argument.
 
-**16 hypotheses generated. 16 executed in 0.6 seconds. 10 red.**
+**16 hypotheses generated. 16 executed in about 1.5 seconds, each from a clean database. 10 red.**
 
 | | |
 |---|---|
@@ -607,7 +615,11 @@ your own run are worth more than any argument.
 | Real, but P3 and arguable | 2 (B2 doc-vs-code, zero-quantity orders) |
 | Hypothesis was simply wrong | 2 green — case-shifted coupon, quantity-as-string |
 | **Green that is a lie** | **1 — TC-006 passed; the injection is real** |
-| **Never hypothesised** | **3 — B6, B8, B10** |
+| **Not in the case set** | **3 — B6, B8, B10** |
+
+> These numbers describe `ai/generated_cases.json`. Before Saturday, run
+> Prompts 2 and 3 on the model you will use on stage and replace every number
+> here, in the slide 9 script, and in Q&A 18 with what actually came back.
 
 Three things this demonstrates, in order of how much they will change what the
 audience does on Monday:
@@ -623,11 +635,12 @@ request and one expected status. Fixing this is a harness problem, not a prompt
 problem. If you want the model to find races, you have to give it a way to say
 "run these twenty at once".
 
-**Some rules are not in the artefact.** B10 is invisible to any reader — human
-or model — who has only the repository. The difference is that a human on the
+**Some rules are not in the artefact.** B10 cannot be confirmed by any reader —
+human or model — who has only the repository. Either might guess; neither can
+know. The difference is that a human on the
 team has been in the meeting. The takeaway is not "AI is limited", it is
-**"put your business rules where a reader can find them"** — which, conveniently,
-also makes them findable by the model. That is the most useful sentence in your
+**"put your business rules where a reader can find them"** — which also gives
+the model a chance to test them. That is the most useful sentence in your
 talk and the one to end this section on.
 
 **Say the central line here, verbatim:**
@@ -682,7 +695,7 @@ correct. I wrote this, I tested it, the tests pass."
 
 "For the next twenty-five minutes I'm going to have a language model take it
 apart. And then — and this is the part I actually care about — I'm going to show
-you three bugs the model never looked for, because that second half is what
+you three bugs that weren't in the model's case set, because that second half is what
 decides whether this technique is worth anything to you on Monday."
 
 "I'm Vidyarathna. I write Python backends. Everything I'm running is on that
@@ -724,16 +737,16 @@ does, and every test passes. You get a green suite that asserts your bugs are
 correct."
 
 "One more thing in there: before it generates anything, I make it list the five
-assumptions this API makes about its callers. Then violate each one. That
-consistently gets me better cases — it has to derive them instead of recalling
-them."
+assumptions this API makes about its callers. Then violate each one. The idea
+is that it has to derive cases from something instead of recalling generic
+ones."
 
 ### 06:00 — DEMO 1 — generation
 
 *(Full screen terminal. Run the generation, or open the saved file.)*
 
-"I'm pasting a six-line summary of the API. Not the full OpenAPI dump — I've
-found a short summary produces better cases than nine hundred lines of schema."
+"I'm pasting a short summary of the API, not the full OpenAPI dump. I'd rather
+give it the rules in plain words than make it dig them out of a schema."
 
 *(While it streams.)* "This is running against a local model. No internet in
 this demo, which is partly principle and mostly cowardice."
@@ -750,8 +763,8 @@ impressed. What matters is what happens when you run them."
 
 *(Run `python -m tests.runner`.)*
 
-"Sixteen cases. Six tenths of a second. Ten of them did not do what the model
-said a correct API would do."
+"Sixteen cases, each one against a freshly reset database. About a second and
+a half. Ten of them did not do what the model said a correct API would do."
 
 *(Pause. Let people read.)*
 
@@ -836,35 +849,44 @@ stop at five — I capped it because I run out of stock."
 There is no error anywhere in that output. If you were watching a dashboard
 you'd see a successful customer having a great morning."
 
-"Here's the honest part. The model gave me one half of that. It found the
-reusable coupon. When I ran my business-logic prompt it also noticed that
-credits come off list price rather than the charge — it called that 'medium'.
-What it didn't do was put them together and see that the result is unbounded,
-because it doesn't know credits are money in my organisation unless I tell it,
-and 'unbounded' isn't a property of any request in that loop. It's a property of
-the loop."
+*(Say only what your real Prompt 3 run produced. Pick the version that
+matches, and have the output file open in case someone asks.)*
 
-"That's the division of labour. It gave me two findings. I gave it the
-connection."
+*If it flagged the list-price credits but not the loop:* "Here's the honest
+part. The model found the reusable coupon. With the business-logic prompt it
+also flagged that credits come off list price. What it didn't do was put them
+together and see that the result is unbounded — and 'unbounded' isn't a
+property of any request in that loop. It's a property of the loop. It gave me
+two findings. I made the connection."
 
-### 18:30 — DEMO 4 — what it missed
+*If it only found the coupon:* "Here's the honest part. The model found the
+reusable coupon. It didn't flag the credits line at all, even with a prompt
+that told it credits are spendable. It gave me one finding. The other half came
+from knowing the code."
 
-"Two more, and these it never hypothesised at all."
+*If it found the whole loop:* say so. "It found this one. Here's what it took:
+this prompt, with these rules written out." The prompt on screen becomes the
+point — context is what made it work.
+
+### 18:30 — DEMO 4 — what wasn't in the case set
+
+"Two more, and neither is in the case set I just ran."
 
 *(Run `demo/race.py`.)*
 
 "Five seats on the workshop. Twenty people click buy at the same moment."
 
-*(Output appears.)* "Twenty accepted. Zero rejected. Two seats 'remaining',
-which is arithmetically impossible."
+*(Output appears.)* "Twenty accepted. Zero rejected. And a couple of seats
+still 'remaining', which is arithmetically impossible."
 
 "Every one of those requests is valid. Every response is a two-oh-one that the
 test suite already agreed was correct. The bug isn't in any request — it's in
 the gap between two of them. The code reads stock, decides, then writes. Two
 requests read the same number."
 
-"And I want to be precise about why the model missed this, because it's not
-'the AI isn't smart enough'. Look at the format I gave it: one request, one
+"And I want to be precise about why this isn't in the case set, because it's
+not 'the AI isn't smart enough'. Plenty of models will suggest testing
+concurrent purchases. But look at the format I gave it: one request, one
 expected status. You cannot express 'run these twenty simultaneously' in that
 schema. It's a representational limit. If I want races found, I have to build a
 harness that can say that — that's my job, not the model's."
@@ -882,12 +904,14 @@ that rule is in a pricing policy document. It is not in the code, not in the
 schema, not in the OpenAPI description, not in a comment. There is nothing in
 that repository that is inconsistent with what you just watched."
 
-"No prompt recovers that. Not a better model, not a longer context — the
-information isn't there. The only reason I know is that I was in the meeting."
+"A model might well try this purchase — the audience field is right there in
+the response. But it can't tell you whether that two-oh-one is wrong, and
+neither can a better model or a longer context, because the rule isn't there.
+The only reason I know is that I was in the meeting."
 
 "But flip it round, because this isn't a complaint about AI. If I'd written that
-rule into the endpoint description, the model would have found it in the first
-pass. The lesson isn't 'AI is limited'. It's *write your business rules
+rule into the endpoint description, the model would at least have had a chance
+to test it. The lesson isn't 'AI is limited'. It's *write your business rules
 somewhere a reader can find them* — and now 'a reader' includes a machine that
 will test them for free."
 
@@ -917,16 +941,16 @@ that were just wrong."
 
 "The honest numbers, because I think most talks on this skip them."
 
-"Sixteen hypotheses. Six tenths of a second to run. Ten red. Six I'd file. Two
-arguable. One green that lied to me. And three bugs it never hypothesised —
-including the one that manufactures money."
+"Sixteen hypotheses. A second and a half to run. Ten red. Six I'd file. Two
+arguable. One green that lied to me. And three bugs that weren't in its case
+set — including the one that manufactures money."
 
-"If you want a ratio: it did maybe an hour of my adversarial thinking in about a
-second, at roughly sixty percent precision, and it did not touch the most
+"If you want a ratio: it did maybe an hour of my adversarial thinking in a couple of
+seconds of execution, at roughly sixty percent precision, and it did not touch the most
 expensive defect in the codebase."
 
-"That's not a dunk. An hour of adversarial test design in a second is an
-extraordinary trade. I just don't want anyone leaving here thinking they can
+"That's not a dunk. An hour of adversarial test design for one prompt and a
+couple of seconds of execution is a very good trade. I just don't want anyone leaving here thinking they can
 stop looking."
 
 ### 27:30 — Slide 10 — where this goes
@@ -965,7 +989,7 @@ is where you work. Slides on the same screen, alt-tab between them.
 | 1 | Happy path | `curl ... -d '{"ticket_id":1,"quantity":2}'` | "This works." |
 | 2 | Slide 2, slide 3 | — | rules + prompt |
 | 3 | Generate | `python ai/generate.py --prompt 2` **or** `cat ai/generated_cases.json \| head -40` | "Sixteen cases." |
-| 4 | Execute | `python -m tests.runner` | "Six tenths of a second. Ten red." |
+| 4 | Execute | `python -m tests.runner` | "A second and a half. Ten red." |
 | 5 | Walk TC-001 | point only | negative quantity |
 | 6 | Walk TC-008 | point only | IDOR, one-fixture-user point |
 | 7 | Forge admin | the `FORGED=` one-liner | "I never called login." |
@@ -1061,9 +1085,11 @@ adversarial hypothesis dropped to near zero. That changes how many you have, not
 what they are.
 
 **3. Can AI actually find security vulnerabilities?**
-It found a SQL injection, an IDOR and a forgeable token in this API in one pass.
-It also missed a race condition and a logic flaw that creates money. So: it
-finds the well-known shapes reliably and reasons about novel composition poorly.
+In my run it produced cases that exposed a SQL injection, an IDOR and a
+forgeable token. What wasn't in its cases: an executable race condition, and the
+logic chain that creates money. One small API doesn't support a general claim,
+so I'd put it this way: here it did well on well-known shapes and didn't compose
+the novel one.
 Treat it as a very fast, very well-read junior who has never seen your system —
 useful, not sufficient, and not a pentest.
 
@@ -1154,20 +1180,21 @@ hypothesis, which is a cheap prompt change.
 **16. Doesn't the model just memorise the OWASP Top 10?**
 Largely, yes, for the security cases — and I'd say that's fine, since the OWASP
 Top 10 is the top ten for a reason. Where it stops being recall is the business
-logic prompt, and that's also where its performance drops off, which is
-consistent with the memorisation story. It's a good reason not to claim more
+logic prompt, and that's where I'd expect it to drop off — though I'd want to
+see that across more than one API before claiming it. It's a good reason not to claim more
 than you can show.
 
 **17. How much did the prompt matter versus the model?**
-More. The single highest-impact line was "expect_status is what a *correct*
-implementation would return" — without it everything passes and you get a suite
-that certifies your bugs. Second was pasting a sample token, which is the only
-reason it found the forgeable auth. Third was asking it to enumerate the API's
-assumptions before generating.
+I haven't measured it properly, so this is my ranking, not data. The line I'd
+defend hardest is "expect_status is what a *correct* implementation would
+return" — without it the model tends to write down what the API does, and you
+get a suite that certifies your bugs. Pasting a sample token plausibly matters
+for the forgeable auth, because the token's format is visible in it. Asking for
+assumptions first is the one I'm least sure about.
 
 **18. What's your prompt-to-useful-bug ratio honestly?**
-Today: 16 cases, 10 red, 6 I'd file, 2 arguable, 3 real bugs never hypothesised
-at all. That's one pass of one prompt on a 180-line API. On a real service I'd
+Today: 16 cases, 10 red, 6 I'd file, 2 arguable, 3 real bugs not in the case
+set. That's one pass of one prompt on a 180-line API. On a real service I'd
 expect worse precision and more duplication, because there's more surface for
 the model to generate plausible-but-wrong hypotheses about.
 
@@ -1179,8 +1206,8 @@ one process and quietly stops working the moment you run two. The fixes need the
 same triage as the findings.
 
 **20. What would you do differently next time?**
-Give it the ability to express multi-request sequences. Everything it missed
-except the student rule was a *sequence* problem, not a reasoning problem — the
+Give it the ability to express multi-request sequences. Everything missing from
+the case set except the student rule was a *sequence* problem, not a reasoning problem — the
 race, and the coupon-plus-credits chain. If the case schema had a `steps` array
 and an assertion about final state rather than a single status code, I think it
 would have found the money loop. That's my next experiment and it's a harness
