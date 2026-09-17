@@ -1,0 +1,100 @@
+{
+  "assumptions": [
+    "The API does not perform any input validation.",
+    "All requests are authenticated."
+  ],
+  "cases": [
+    {
+      "id": "TC-001",
+      "objective": "Test if a user can buy more tickets than allowed per order.",
+      "method": "POST",
+      "endpoint": "/orders",
+      "auth": "alice",
+      "payload": {
+        "ticket_id": 1,
+        "quantity": 11,
+        "coupon": null
+      },
+      "query": {},
+      "expected_behaviour": "The API should reject the request because the user is trying to buy more than 10 tickets in a single order.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "error",
+      "potential_vulnerability": "Limit enforcement per-request but not per-user or per-lifetime",
+      "reason": "The API does not enforce a limit on the number of tickets a user can buy in a single order, allowing a user to exceed the maximum allowed.",
+      "severity": "medium",
+      "repeat": 1,
+      "setup": [
+        {"method": "POST", "endpoint": "/orders", "auth": "alice", "payload": {"ticket_id": 1, "quantity": 1, "coupon": null}}
+      ]
+    },
+    {
+      "id": "TC-002",
+      "objective": "Test if a user can use a coupon to bypass the maximum ticket limit.",
+      "method": "POST",
+      "endpoint": "/orders",
+      "auth": "alice",
+      "payload": {
+        "ticket_id": 1,
+        "quantity": 11,
+        "coupon": "EARLYBIRD"
+      },
+      "query": {},
+      "expected_behaviour": "The API should reject the request because the user is trying to buy more than 10 tickets in a single order, even with a coupon.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "error",
+      "potential_vulnerability": "Limit enforcement per-request but not per-user or per-lifetime",
+      "reason": "The API does not enforce a limit on the number of tickets a user can buy in a single order, even with a coupon.",
+      "severity": "medium",
+      "repeat": 1,
+      "setup": [
+        {"method": "POST", "endpoint": "/orders", "auth": "alice", "payload": {"ticket_id": 1, "quantity": 1, "coupon": null}}
+      ]
+    },
+    {
+      "id": "TC-003",
+      "objective": "Test if a user can use a coupon to bypass the maximum ticket limit and earn more credits.",
+      "method": "POST",
+      "endpoint": "/orders",
+      "auth": "alice",
+      "payload": {
+        "ticket_id": 1,
+        "quantity": 11,
+        "coupon": "EARLYBIRD"
+      },
+      "query": {},
+      "expected_behaviour": "The API should reject the request because the user is trying to buy more than 10 tickets in a single order, even with a coupon.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "error",
+      "potential_vulnerability": "Limit enforcement per-request but not per-user or per-lifetime",
+      "reason": "The API does not enforce a limit on the number of tickets a user can buy in a single order, even with a coupon.",
+      "severity": "medium",
+      "repeat": 1,
+      "setup": [
+        {"method": "POST", "endpoint": "/orders", "auth": "alice", "payload": {"ticket_id": 1, "quantity": 1, "coupon": null}}
+      ]
+    },
+    {
+      "id": "TC-004",
+      "objective": "Test if a user can use a coupon to bypass the maximum ticket limit and earn more credits.",
+      "method": "POST",
+      "endpoint": "/orders",
+      "auth": "alice",
+      "payload": {
+        "ticket_id": 1,
+        "quantity": 11,
+        "coupon": "EARLYBIRD"
+      },
+      "query": {},
+      "expected_behaviour": "The API should reject the request because the user is trying to buy more than 10 tickets in a single order, even with a coupon.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "error",
+      "potential_vulnerability": "Limit enforcement per-request but not per-user or per-lifetime",
+      "reason": "The API does not enforce a limit on the number of tickets a user can buy in a single order, even with a coupon.",
+      "severity": "medium",
+      "repeat": 1,
+      "setup": [
+        {"method": "POST", "endpoint": "/orders", "auth": "alice", "payload": {"ticket_id": 1, "quantity": 1, "coupon": null}}
+      ]
+    }
+  ]
+}
