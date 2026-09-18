@@ -1,0 +1,204 @@
+{
+  "assumptions": [
+    "The API does not validate input data thoroughly.",
+    "The API does not enforce proper authentication and authorization checks."
+  ],
+  "cases": [
+    {
+      "id": "TC-001",
+      "objective": "Test missing required fields in login request",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "auth": "none",
+      "payload": {},
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating missing required fields.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "access_token",
+      "potential_vulnerability": "Missing input validation",
+      "reason": "The API should reject login requests without email and password.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-002",
+      "objective": "Test null values in login request",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "auth": "none",
+      "payload": {
+        "email": null,
+        "password": null
+      },
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating invalid input.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "access_token",
+      "potential_vulnerability": "Null input validation",
+      "reason": "The API should reject login requests with null email and password.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-003",
+      "objective": "Test wrong JSON types in login request",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "auth": "none",
+      "payload": {
+        "email": 123,
+        "password": true
+      },
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating invalid input types.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "access_token",
+      "potential_vulnerability": "Type coercion",
+      "reason": "The API should reject login requests with wrong JSON types.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-004",
+      "objective": "Test empty strings in login request",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "auth": "none",
+      "payload": {
+        "email": "",
+        "password": ""
+      },
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating empty input.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "access_token",
+      "potential_vulnerability": "Empty input validation",
+      "reason": "The API should reject login requests with empty email and password.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-005",
+      "objective": "Test boundary values in login request",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "auth": "none",
+      "payload": {
+        "email": "a@b.c",
+        "password": "1234567890"
+      },
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating invalid input.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "access_token",
+      "potential_vulnerability": "Boundary condition handling",
+      "reason": "The API should reject login requests with boundary values.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-006",
+      "objective": "Test oversized values in login request",
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "auth": "none",
+      "payload": {
+        "email": "a"  
+      },
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating invalid input.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "access_token",
+      "potential_vulnerability": "Input length validation",
+      "reason": "The API should reject login requests with oversized email values.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-007",
+      "objective": "Test missing required fields in order request",
+      "method": "POST",
+      "endpoint": "/orders",
+      "auth": "alice",
+      "payload": {},
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating missing required fields.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "order_id",
+      "potential_vulnerability": "Missing input validation",
+      "reason": "The API should reject order requests without ticket_id and quantity.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-008",
+      "objective": "Test null values in order request",
+      "method": "POST",
+      "endpoint": "/orders",
+      "auth": "alice",
+      "payload": {
+        "ticket_id": null,
+        "quantity": null,
+        "coupon": null
+      },
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating invalid input.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "order_id",
+      "potential_vulnerability": "Null input validation",
+      "reason": "The API should reject order requests with null ticket_id and quantity.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-009",
+      "objective": "Test wrong JSON types in order request",
+      "method": "POST",
+      "endpoint": "/orders",
+      "auth": "alice",
+      "payload": {
+        "ticket_id": "abc",
+        "quantity": true,
+        "coupon": 123
+      },
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating invalid input types.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "order_id",
+      "potential_vulnerability": "Type coercion",
+      "reason": "The API should reject order requests with wrong JSON types.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    },
+    {
+      "id": "TC-010",
+      "objective": "Test empty strings in order request",
+      "method": "POST",
+      "endpoint": "/orders",
+      "auth": "alice",
+      "payload": {
+        "ticket_id": "",
+        "quantity": "",
+        "coupon": ""
+      },
+      "query": {},
+      "expected_behaviour": "The API should return an error indicating empty input.",
+      "expect_status": [400, 422],
+      "expect_body_not_contains": "order_id",
+      "potential_vulnerability": "Empty input validation",
+      "reason": "The API should reject order requests with empty ticket_id and quantity.",
+      "severity": "high",
+      "repeat": 1,
+      "setup": []
+    }
+  ]
+}
