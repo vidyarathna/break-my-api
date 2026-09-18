@@ -4,3 +4,4 @@ demo.db
 ai/live_cases.json
 ai/*.raw.txt
 .DS_Store
+slides/Break-My-API-Easy-Guide.pdf
